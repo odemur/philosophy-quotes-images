@@ -13,11 +13,11 @@ SOURCE_DIR = "../images/source"
 OUTPUT_DIR = "../images/public"
 
 # Positioning configuration
-# Logo positioned at 128px from bottom, centered horizontally
+# Logo positioned at 16px from bottom, centered horizontally
 LOGO_MAX_WIDTH = 360  # Maximum logo width in pixels (proportional resizing)
-LOGO_BOTTOM_OFFSET = 128  # Distance from bottom edge in pixels
+LOGO_BOTTOM_OFFSET = 16  # Distance from bottom edge in pixels
 
-def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=128):
+def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=16):
     """Apply logo watermark to an image at bottom center with configurable offset."""
     try:
         # Open the base image
