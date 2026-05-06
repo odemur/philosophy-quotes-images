@@ -13,11 +13,11 @@ SOURCE_DIR = "../images/source"
 OUTPUT_DIR = "../images/public"
 
 # Positioning configuration
-# Logo positioned at 16px from bottom, centered horizontally
+# Logo positioned at 64px from bottom, centered horizontally
 LOGO_MAX_WIDTH = 360  # Maximum logo width in pixels (proportional resizing)
-LOGO_BOTTOM_OFFSET = 16  # Distance from bottom edge in pixels
+LOGO_BOTTOM_OFFSET = 64  # Distance from bottom edge in pixels
 
-def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=16):
+def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=64):
     """Apply logo watermark to an image at bottom center with configurable offset."""
     try:
         # Open the base image
@@ -59,15 +59,16 @@ def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bott
                 # Paste the logo onto the base image
                 watermarked.paste(logo, (x, y), logo)
                 
-                # Save the watermarked image
-                if output_path.lower().endswith(('.jpg', '.jpeg')):
-                    # Convert back to RGB for JPEG files (remove transparency)
-                    rgb_image = Image.new('RGB', watermarked.size, (255, 255, 255))
-                    rgb_image.paste(watermarked, mask=watermarked.split()[-1])
-                    rgb_image.save(output_path, quality=95)
-                else:
-                    watermarked.save(output_path, quality=95)
-                print(f"✓ Watermarked: {os.path.basename(image_path)} -> {os.path.basename(output_path)}")
+                # Save watermarked image
+                # Always save as JPG with 100% quality
+                output_filename = os.path.splitext(os.path.basename(output_path))[0] + '.jpg'
+                output_jpg_path = os.path.join(os.path.dirname(output_path), output_filename)
+                
+                # Convert to RGB for JPG (remove transparency)
+                rgb_image = Image.new('RGB', watermarked.size, (255, 255, 255))
+                rgb_image.paste(watermarked, mask=watermarked.split()[-1])
+                rgb_image.save(output_jpg_path, quality=100)
+                print(f"✓ Watermarked: {os.path.basename(image_path)} -> {output_filename}")
                 return True
                 
     except Exception as e:
