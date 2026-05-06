@@ -13,9 +13,8 @@ SOURCE_DIR = "../images/source"
 OUTPUT_DIR = "../images/public"
 
 # Positioning configuration
-# Logo positioned at 5px from bottom, centered horizontally
 LOGO_MAX_WIDTH = 360  # Maximum logo width in pixels (proportional resizing)
-LOGO_BOTTOM_OFFSET = 5  # Distance from bottom edge in pixels
+LOGO_BOTTOM_OFFSET = 0  # Distance from bottom edge in pixels
 
 def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=5):
     """Apply logo watermark to an image at bottom center with configurable offset."""
@@ -39,14 +38,14 @@ def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bott
                 new_height = int(new_width / aspect_ratio)
                 logo = logo.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
-                # Calculate position (centered horizontally, 5px from bottom)
+                # Calculate position (centered horizontally)
                 base_width, base_height = base_image.size
                 logo_width, logo_height = logo.size
                 
                 # Center horizontally
                 x = (base_width - logo_width) // 2
                 
-                # Position at 5px from bottom
+                # Position from bottom
                 y = base_height - bottom_offset - logo_height
                 
                 # Ensure logo doesn't go outside image bounds
