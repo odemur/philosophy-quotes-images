@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to apply logo watermark to all images in the source directory.
+Handles multiple image formats (posts and stories) with different dimensions.
 The logo will be positioned using configurable offsets from bottom edge, centered horizontally.
 """
 
@@ -9,14 +10,24 @@ from PIL import Image
 
 # Configuration
 LOGO_PATH = "../config/logo.png"
-SOURCE_DIR = "../images/source"
-OUTPUT_DIR = "../images/public"
+SOURCE_BASE_DIR = "../images/source"
+OUTPUT_BASE_DIR = "../images/public"
 
-# Positioning configuration
-LOGO_MAX_WIDTH = 360  # Maximum logo width in pixels (proportional resizing)
-LOGO_BOTTOM_OFFSET = 0  # Distance from bottom edge in pixels
+# Image format configurations
+FORMAT_CONFIGS = {
+    'posts': {
+        'logo_max_width': 360,  # Logo width for posts (1080x1350)
+        'bottom_offset': 0,    # Distance from bottom edge
+        'expected_size': (1080, 1350)
+    },
+    'stories': {
+        'logo_max_width': 280,  # Smaller logo for stories (941x1672)
+        'bottom_offset': 64,    # Double distance from bottom edge (10px instead of 0px)
+        'expected_size': (941, 1672)
+    }
+}
 
-def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=5):
+def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bottom_offset=0):
     """Apply logo watermark to an image at bottom center with configurable offset."""
     try:
         # Open the base image
@@ -74,58 +85,86 @@ def apply_watermark(image_path, logo_path, output_path, logo_max_width=360, bott
         print(f"✗ Error processing {image_path}: {str(e)}")
         return False
 
+def process_format(format_name):
+    """Process all images in a specific format folder."""
+    source_dir = os.path.join(SOURCE_BASE_DIR, format_name)
+    output_dir = os.path.join(OUTPUT_BASE_DIR, format_name)
+    config = FORMAT_CONFIGS[format_name]
+    
+    print(f"\nProcessing {format_name.upper()} images...")
+    print(f"Source: {source_dir}")
+    print(f"Output: {output_dir}")
+    print(f"Logo size: {config['logo_max_width']}px max width")
+    print(f"Bottom offset: {config['bottom_offset']}px")
+    
+    # Check if source directory exists
+    if not os.path.exists(source_dir):
+        print(f"Warning: Source directory '{source_dir}' not found!")
+        return 0, 0
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Supported image extensions
+    supported_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')
+    
+    # Check if source directory has images
+    image_files = [f for f in os.listdir(source_dir) if f.lower().endswith(supported_extensions)]
+    if not image_files:
+        print(f"No supported images found in '{source_dir}'")
+        return 0, 0
+    
+    print(f"Found {len(image_files)} images to process")
+    
+    # Process all images in the format directory
+    processed_count = 0
+    error_count = 0
+    
+    for filename in image_files:
+        input_path = os.path.join(source_dir, filename)
+        output_path = os.path.join(output_dir, filename)
+        
+        if apply_watermark(input_path, LOGO_PATH, output_path, 
+                          config['logo_max_width'], config['bottom_offset']):
+            processed_count += 1
+        else:
+            error_count += 1
+    
+    return processed_count, error_count
 def main():
-    """Main function to process all images."""
+    """Main function to process all images in all format folders."""
     print("Starting watermark application...")
     print(f"Logo: {LOGO_PATH}")
-    print(f"Source directory: {SOURCE_DIR}")
-    print(f"Output directory: {OUTPUT_DIR}")
-    print(f"Logo position: {LOGO_BOTTOM_OFFSET}px from bottom, centered")
-    print("-" * 50)
+    print(f"Source base directory: {SOURCE_BASE_DIR}")
+    print(f"Output base directory: {OUTPUT_BASE_DIR}")
+    print("=" * 60)
     
     # Check if logo exists
     if not os.path.exists(LOGO_PATH):
         print(f"Error: Logo file '{LOGO_PATH}' not found!")
         return
     
-    # Check if source directory exists
-    if not os.path.exists(SOURCE_DIR):
-        print(f"Error: Source directory '{SOURCE_DIR}' not found!")
+    # Check if source base directory exists
+    if not os.path.exists(SOURCE_BASE_DIR):
+        print(f"Error: Source base directory '{SOURCE_BASE_DIR}' not found!")
         return
     
-    # Create output directory if it doesn't exist
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    # Process all formats
+    total_processed = 0
+    total_errors = 0
     
-    # Supported image extensions
-    supported_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')
+    for format_name in FORMAT_CONFIGS.keys():
+        processed, errors = process_format(format_name)
+        total_processed += processed
+        total_errors += errors
     
-    # Check if source directory has images
-    image_files = [f for f in os.listdir(SOURCE_DIR) if f.lower().endswith(supported_extensions)]
-    if not image_files:
-        print(f"No supported images found in '{SOURCE_DIR}'")
-        return
-    
-    print(f"Found {len(image_files)} images to process")
-    
-    # Process all images in the images directory
-    processed_count = 0
-    error_count = 0
-    
-    for filename in os.listdir(SOURCE_DIR):
-        if filename.lower().endswith(supported_extensions):
-            input_path = os.path.join(SOURCE_DIR, filename)
-            output_path = os.path.join(OUTPUT_DIR, filename)
-            
-            if apply_watermark(input_path, LOGO_PATH, output_path, LOGO_MAX_WIDTH, LOGO_BOTTOM_OFFSET):
-                processed_count += 1
-            else:
-                error_count += 1
-    
-    print("-" * 50)
-    print(f"Processing complete!")
-    print(f"Successfully processed: {processed_count} images")
-    print(f"Errors: {error_count} images")
-    print(f"Watermarked images saved to: {OUTPUT_DIR}/")
+    print("=" * 60)
+    print("SUMMARY:")
+    print(f"Total successfully processed: {total_processed} images")
+    print(f"Total errors: {total_errors} images")
+    print(f"Watermarked images saved to: {OUTPUT_BASE_DIR}/")
+    print(f"  - posts: {OUTPUT_BASE_DIR}/posts/")
+    print(f"  - stories: {OUTPUT_BASE_DIR}/stories/")
 
 if __name__ == "__main__":
     main()
